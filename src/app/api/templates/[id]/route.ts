@@ -7,7 +7,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const body = await req.json();
     const allowed = ['name','description','bgColor','overlayColor','primaryColor','secondaryColor',
       'priceColor','titleColor','fontStyle','titleSize','priceSize','layout','logoPosition',
-      'showBanner','bannerText','bannerBgColor','priceGlowIntensity','bgImage','thumbnail','active'];
+      'showBanner','bannerText','bannerBgColor','priceGlowIntensity','itemsPerPage','bgImage','thumbnail','active'];
     const data: Record<string, unknown> = {};
     for (const key of allowed) {
       if (body[key] !== undefined) data[key] = body[key];

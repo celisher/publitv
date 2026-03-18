@@ -33,6 +33,7 @@ const EMPTY_FORM = {
   layout: 'grid', logoPosition: 'top-left',
   showBanner: true, bannerText: '', bannerBgColor: '#c0392b',
   priceGlowIntensity: 40,
+  itemsPerPage: 8,
   bgImage: null as string | null, active: true,
 };
 
@@ -69,6 +70,7 @@ export default function TemplatesPage() {
       layout: t.layout, logoPosition: t.logoPosition,
       showBanner: t.showBanner, bannerText: t.bannerText || '', bannerBgColor: t.bannerBgColor,
       priceGlowIntensity: t.priceGlowIntensity ?? 40,
+      itemsPerPage: t.itemsPerPage ?? 8,
       bgImage: t.bgImage || null, active: t.active,
     });
     setModalOpen(true);
@@ -232,6 +234,24 @@ export default function TemplatesPage() {
             <Select label="Posición del logo" value={form.logoPosition}
               onChange={(e) => setForm({ ...form, logoPosition: e.target.value })}
               options={LOGO_POSITIONS} />
+          </div>
+
+          {/* Items per page */}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-white/70">Filas por vista (carrusel)</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range" min={4} max={20} step={1}
+                value={form.itemsPerPage}
+                onChange={(e) => setForm({ ...form, itemsPerPage: parseInt(e.target.value) })}
+                className="flex-1 h-2 rounded-full appearance-none cursor-pointer"
+                style={{ background: `linear-gradient(to right, ${form.primaryColor} 0%, ${form.primaryColor} ${((form.itemsPerPage - 4) / 16) * 100}%, rgba(255,255,255,0.1) ${((form.itemsPerPage - 4) / 16) * 100}%, rgba(255,255,255,0.1) 100%)` }}
+              />
+              <span className="text-2xl font-black w-10 text-center" style={{ color: form.primaryColor }}>
+                {form.itemsPerPage}
+              </span>
+            </div>
+            <p className="text-xs text-white/30">Min 4 · Max 20 · Por defecto 8 · Modo compact activo a partir de 9+</p>
           </div>
 
           {/* Banner */}

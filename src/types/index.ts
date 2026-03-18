@@ -47,6 +47,7 @@ export interface Template {
   bannerText: string | null;
   bannerBgColor: string;
   priceGlowIntensity: number;
+  itemsPerPage: number;
   thumbnail: string | null;
   active: boolean;
   createdAt: string;

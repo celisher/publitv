@@ -36,12 +36,67 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 
 function TVHeader({ settings, template }: { settings: Record<string, string>; template: Template | null }) {
   const logoPos = template?.logoPosition || 'top-left';
-  const isCenter = logoPos === 'top-center';
+  const borderColor = `${template?.primaryColor || '#ff4500'}33`;
+  const titleColor  = template?.titleColor || '#ffffff';
+  const subColor    = template?.secondaryColor || '#d4ac0d';
 
+  // ── top-right: large logo right, title+subtitle centered, compact height ──
+  if (logoPos === 'top-right') {
+    return (
+      <div className="relative flex items-center px-10 py-3"
+        style={{ borderBottom: `2px solid ${borderColor}`, minHeight: 90 }}>
+        {/* Title block — absolute center */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <h1 className="text-4xl font-black tracking-widest uppercase leading-none"
+            style={{ color: titleColor }}>
+            {settings.business_name || 'FRIGORIFICO EL TORO 2026 C.A'}
+          </h1>
+          {settings.business_tagline && (
+            <p className="text-base tracking-wider mt-1 opacity-70"
+              style={{ color: subColor }}>
+              {settings.business_tagline}
+            </p>
+          )}
+        </div>
+        {/* Logo — right side, large */}
+        {settings.logo_path && (
+          <div className="relative ml-auto flex-shrink-0" style={{ width: 80, height: 80 }}>
+            <Image src={settings.logo_path} alt="Logo" fill className="object-contain" unoptimized />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── top-center: logo above title, centered ────────────────────────────────
+  if (logoPos === 'top-center') {
+    return (
+      <div className="flex flex-col items-center px-12 py-5"
+        style={{ borderBottom: `2px solid ${borderColor}` }}>
+        {settings.logo_path && (
+          <div className="relative w-16 h-16 mb-2">
+            <Image src={settings.logo_path} alt="Logo" fill className="object-contain" unoptimized />
+          </div>
+        )}
+        <h1 className="text-4xl font-black tracking-widest uppercase"
+          style={{ color: titleColor }}>
+          {settings.business_name || 'FRIGORIFICO EL TORO 2026 C.A'}
+        </h1>
+        {settings.business_tagline && (
+          <p className="text-lg tracking-wider mt-1 opacity-70"
+            style={{ color: subColor }}>
+            {settings.business_tagline}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // ── top-left (default): logo left, price unit right ───────────────────────
   return (
-    <div className={`flex items-center px-12 py-6 ${isCenter ? 'justify-center' : 'justify-between'}`}
-      style={{ borderBottom: `2px solid ${template?.primaryColor || '#ff4500'}33` }}>
-      <div className={`flex items-center gap-6 ${isCenter ? 'flex-col' : ''}`}>
+    <div className="flex items-center justify-between px-12 py-6"
+      style={{ borderBottom: `2px solid ${borderColor}` }}>
+      <div className="flex items-center gap-6">
         {settings.logo_path && (
           <div className="relative w-20 h-20">
             <Image src={settings.logo_path} alt="Logo" fill className="object-contain" unoptimized />
@@ -49,25 +104,23 @@ function TVHeader({ settings, template }: { settings: Record<string, string>; te
         )}
         <div>
           <h1 className="text-4xl font-black tracking-widest uppercase"
-            style={{ color: template?.titleColor || '#ffffff' }}>
+            style={{ color: titleColor }}>
             {settings.business_name || 'FRIGORIFICO EL TORO 2026 C.A'}
           </h1>
           {settings.business_tagline && (
             <p className="text-lg tracking-wider mt-1 opacity-70"
-              style={{ color: template?.secondaryColor || '#d4ac0d' }}>
+              style={{ color: subColor }}>
               {settings.business_tagline}
             </p>
           )}
         </div>
       </div>
-      {!isCenter && (
-        <div className="text-right">
-          <p className="text-2xl font-bold uppercase tracking-widest"
-            style={{ color: template?.secondaryColor || '#d4ac0d' }}>
-            {settings.price_unit || '$/KG'}
-          </p>
-        </div>
-      )}
+      <div className="text-right">
+        <p className="text-2xl font-bold uppercase tracking-widest"
+          style={{ color: subColor }}>
+          {settings.price_unit || '$/KG'}
+        </p>
+      </div>
     </div>
   );
 }
@@ -159,7 +212,7 @@ function CarouselLayout({ data }: { data: TVScreenData }) {
   const allProducts = groups.flatMap((g) =>
     g.products.map((p) => ({ ...p, _categoryName: g.category.name, _categoryColor: g.category.color, _categoryIcon: g.category.icon }))
   );
-  const pages = chunkArray(allProducts, 8);
+  const pages = chunkArray(allProducts, template?.itemsPerPage || 8);
 
   useEffect(() => {
     if (pages.length <= 1) return;
@@ -172,25 +225,65 @@ function CarouselLayout({ data }: { data: TVScreenData }) {
   if (pages.length === 0) return null;
   const page = pages[pageIndex];
 
+  // Density levels based on items per page — never change font sizes
+  const ipp = template?.itemsPerPage || 8;
+  // normal ≤8 | compact 9-14 | ultra 15+
+  const density = ipp <= 8 ? 'normal' : ipp <= 14 ? 'compact' : 'ultra';
+
+  const densityStyles = {
+    normal:  { cardPx: 'px-6', gridGap: 'gap-3',   wrapperPb: 'pb-4', cardPy: 12 },
+    compact: { cardPx: 'px-4', gridGap: 'gap-1.5', wrapperPb: 'pb-2', cardPy: 6  },
+    ultra:   { cardPx: 'px-4', gridGap: 'gap-1',   wrapperPb: 'pb-1', cardPy: 3  },
+  }[density];
+
+  const showMeta = density === 'normal';
+
+  // Pad page with null slots so the grid always has ipp items → constant row height
+  type PageItem = (Product & { _categoryName?: string; _categoryColor?: string | null; _categoryIcon?: string | null }) | null;
+  const paddedPage: PageItem[] = [...page];
+  while (paddedPage.length < ipp) paddedPage.push(null);
+
   return (
-    <div className="flex-1 overflow-hidden px-8 pb-4">
-      <div className="grid grid-cols-2 gap-3 h-full">
-        {page.map((p: Product & { _categoryName?: string; _categoryColor?: string | null; _categoryIcon?: string | null }) => (
-          <div key={p.id} className="flex items-center justify-between px-6 py-4 rounded-xl border border-white/10 animate-fade-in"
-            style={{ background: 'rgba(255,255,255,0.04)' }}>
+    <div className={`flex-1 overflow-hidden px-8 ${densityStyles.wrapperPb}`}>
+      <div className={`grid grid-cols-2 ${densityStyles.gridGap} h-full`}>
+        {paddedPage.map((p, idx) =>
+          p === null ? (
+            // Ghost row — invisible but occupies the same space as a real row
+            <div key={`ghost-${idx}`}
+              className={`flex items-center ${densityStyles.cardPx} rounded-xl`}
+              style={{ paddingTop: densityStyles.cardPy, paddingBottom: densityStyles.cardPy, opacity: 0, pointerEvents: 'none' }}>
+              <div className="flex-shrink-0 mr-4" style={{ width: 64, height: 64 }} />
+              <div className="h-8 flex-1" />
+            </div>
+          ) : (
+          <div key={p.id}
+            className={`flex items-center ${densityStyles.cardPx} rounded-xl border border-white/10 animate-fade-in`}
+            style={{ background: 'rgba(255,255,255,0.04)', paddingTop: densityStyles.cardPy, paddingBottom: densityStyles.cardPy }}>
+            {/* Product logo — fixed width on the left */}
+            <div className="flex-shrink-0 mr-4 rounded-lg overflow-hidden"
+              style={{ width: 64, height: 64, background: 'rgba(255,255,255,0.06)', border: `1px solid ${p._categoryColor || template?.primaryColor || '#ff4500'}44` }}>
+              {p.image ? (
+                <Image src={p.image} alt={p.name} width={64} height={64} className="w-full h-full object-cover" unoptimized />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-2xl opacity-40">
+                  {p._categoryIcon || '🥩'}
+                </div>
+              )}
+            </div>
+            {/* Name */}
             <div className="flex-1 min-w-0">
-              <p className="text-xs uppercase tracking-widest mb-1 opacity-60"
-                style={{ color: p._categoryColor || template?.secondaryColor || '#d4ac0d' }}>
-                {p._categoryIcon} {p._categoryName}
-              </p>
-              <p className="text-3xl font-black uppercase leading-tight"
+              {showMeta && (
+                <p className="text-xs uppercase tracking-widest mb-0.5 opacity-60"
+                  style={{ color: p._categoryColor || template?.secondaryColor || '#d4ac0d' }}>
+                  {p._categoryName}
+                </p>
+              )}
+              <p className="text-3xl font-black uppercase leading-none truncate"
                 style={{ color: template?.titleColor || '#ffffff' }}>
                 {p.name}
               </p>
-              {p.description && (
-                <p className="text-sm opacity-50 mt-1">{p.description}</p>
-              )}
             </div>
+            {/* Price */}
             {screen.showPrices && (
               <div className="flex-shrink-0 ml-4">
                 <span className="text-5xl font-black tabular-nums"
@@ -203,7 +296,8 @@ function CarouselLayout({ data }: { data: TVScreenData }) {
               </div>
             )}
           </div>
-        ))}
+          )
+        )}
       </div>
       {pages.length > 1 && (
         <div className="flex justify-center gap-2 mt-2">
@@ -322,6 +416,7 @@ export default function TVPage() {
   const socketRef = useRef<Socket | null>(null);
   const scaleRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [viewportH, setViewportH] = useState(1080);
 
   const fetchData = useCallback(async () => {
     try {
@@ -339,12 +434,11 @@ export default function TVPage() {
     }
   }, [slug]);
 
-  // Scale TV canvas to viewport
+  // Scale TV canvas to fill full width without distortion
   useEffect(() => {
     function updateScale() {
-      const scaleX = window.innerWidth / 1920;
-      const scaleY = window.innerHeight / 1080;
-      setScale(Math.min(scaleX, scaleY));
+      setScale(window.innerWidth / 1920);
+      setViewportH(window.innerHeight);
     }
     updateScale();
     window.addEventListener('resize', updateScale);
@@ -401,43 +495,61 @@ export default function TVPage() {
 
   const { template, settings } = data;
 
-  // Build background style from template
-  const bgStyle: React.CSSProperties = {
+  // Canvas scaled height in real pixels — center vertically if screen is taller than 16:9
+  const scaledHeight = 1080 * scale;
+  const topOffset = Math.max(0, (viewportH - scaledHeight) / 2);
+
+  // Background covers the full real screen (wrapper)
+  const wrapperStyle: React.CSSProperties = {
+    width: '100vw',
+    height: '100vh',
+    overflow: 'hidden',
+    position: 'relative',
     backgroundColor: template?.bgColor || '#0d0d0d',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
   };
-  if (template?.bgImage) bgStyle.backgroundImage = `url(${template.bgImage})`;
+  if (template?.bgImage) wrapperStyle.backgroundImage = `url(${template.bgImage})`;
 
+  // Overlay also covers the full real screen
   const overlayStyle: React.CSSProperties = {
     position: 'absolute',
     inset: 0,
     background: template?.overlayColor || 'rgba(0,0,0,0.6)',
     zIndex: 1,
+    pointerEvents: 'none',
   };
 
-  const contentStyle: React.CSSProperties = { position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', height: '100%' };
+  const contentStyle: React.CSSProperties = {
+    position: 'relative',
+    zIndex: 2,
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+  };
 
   const displayMode = data.screen.displayMode;
 
   return (
-    <div className="tv-wrapper" style={{ background: '#000' }}>
+    <div className="tv-wrapper" style={wrapperStyle}>
+      {/* Full-screen overlay */}
+      <div style={overlayStyle} />
+
+      {/* Scaled 1920×1080 canvas — fills full width, centered vertically */}
       <div
         ref={scaleRef}
         style={{
           width: 1920,
           height: 1080,
           transform: `scale(${scale})`,
-          transformOrigin: 'center center',
-          overflow: 'hidden',
-          position: 'relative',
-          ...bgStyle,
+          transformOrigin: 'top left',
+          position: 'absolute',
+          top: topOffset,
+          left: 0,
+          zIndex: 2,
         }}
       >
-        {/* Overlay */}
-        <div style={overlayStyle} />
-
         {/* Content */}
         <div style={contentStyle}>
           <TVHeader settings={settings} template={template} />

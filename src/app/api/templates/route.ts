@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, description, bgColor, overlayColor, primaryColor, secondaryColor,
       priceColor, titleColor, fontStyle, titleSize, priceSize, layout,
-      logoPosition, showBanner, bannerText, bannerBgColor, priceGlowIntensity, bgImage } = body;
+      logoPosition, showBanner, bannerText, bannerBgColor, priceGlowIntensity, itemsPerPage, bgImage } = body;
 
     if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 });
 
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
         showBanner: showBanner ?? true, bannerText: bannerText || null,
         bannerBgColor: bannerBgColor || '#c0392b',
         priceGlowIntensity: priceGlowIntensity ?? 40,
+        itemsPerPage: itemsPerPage ?? 8,
         bgImage: bgImage || null, active: true,
       },
     });
