@@ -1,9 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'eltoro2026.vip'],
     unoptimized: true,
   },
+  // Disable ISR/full-route cache to avoid serving stale responses
+  experimental: {
+    isrFlushToDisk: false,
+  },
+  generateEtags: false,
   // Necessary to allow socket.io custom server
   webpack: (config) => {
     config.externals.push({
