@@ -108,7 +108,10 @@ export default function PromotionsPage() {
             {promotions.filter((p) => p.active).length} activas de {promotions.length} total
           </p>
         </div>
-        <Button icon={<Plus size={16} />} onClick={openCreate}>Nueva Promoción</Button>
+        <Button icon={<Plus size={16} />} onClick={openCreate}>
+          <span className="hidden sm:inline">Nueva Promoción</span>
+          <span className="sm:hidden">Nueva</span>
+        </Button>
       </div>
 
       {loading ? (
@@ -191,7 +194,7 @@ export default function PromotionsPage() {
             onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
             placeholder="Ej: Carne Primera solo $9,90/kg este fin de semana" />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select label="Tipo" value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value })}
               options={PROMO_TYPES} />
@@ -203,7 +206,7 @@ export default function PromotionsPage() {
           <ImageUpload label="Imagen de la promoción (opcional)" value={form.image}
             onChange={(url) => setForm({ ...form, image: url })} folder="uploads/promotions" />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-white/70">Color de fondo</label>
               <div className="flex items-center gap-2">
@@ -224,7 +227,7 @@ export default function PromotionsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Fecha inicio (opcional)" type="date" value={form.startDate}
               onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
             <Input label="Fecha fin (opcional)" type="date" value={form.endDate}
