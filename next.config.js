@@ -4,10 +4,8 @@ const nextConfig = {
     domains: ['localhost', 'eltoro2026.vip'],
     unoptimized: true,
   },
-  // Disable ISR/full-route cache to avoid serving stale responses
-  experimental: {
-    isrFlushToDisk: false,
-  },
+  // Completely disable full-route cache (prevents stale/contaminated responses)
+  cacheMaxMemorySize: 0,
   generateEtags: false,
   // Necessary to allow socket.io custom server
   webpack: (config) => {
