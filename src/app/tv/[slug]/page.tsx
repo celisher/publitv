@@ -417,6 +417,28 @@ export default function TVPage() {
   const scaleRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [viewportH, setViewportH] = useState(1080);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showFsHint, setShowFsHint] = useState(true);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  // Hide hint after 6 seconds
+  useEffect(() => {
+    const t = setTimeout(() => setShowFsHint(false), 6000);
+    return () => clearTimeout(t);
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -532,9 +554,37 @@ export default function TVPage() {
   const displayMode = data.screen.displayMode;
 
   return (
-    <div className="tv-wrapper" style={wrapperStyle}>
+    <div className="tv-wrapper" style={wrapperStyle} onDoubleClick={toggleFullscreen}>
       {/* Full-screen overlay */}
       <div style={overlayStyle} />
+
+      {/* Fullscreen button */}
+      {!isFullscreen && (
+        <button
+          onClick={toggleFullscreen}
+          style={{
+            position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+            background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 12, padding: '10px 16px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 8,
+            color: '#fff', fontSize: 14, fontWeight: 700,
+            backdropFilter: 'blur(8px)',
+            transition: 'opacity 0.3s',
+            opacity: showFsHint ? 1 : 0.15,
+          }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+          onMouseLeave={e => (e.currentTarget.style.opacity = showFsHint ? '1' : '0.15')}
+          title="Pantalla completa"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 3 21 3 21 9" />
+            <polyline points="9 21 3 21 3 15" />
+            <line x1="21" y1="3" x2="14" y2="10" />
+            <line x1="3" y1="21" x2="10" y2="14" />
+          </svg>
+          {showFsHint && <span>Pantalla completa</span>}
+        </button>
+      )}
 
       {/* Scaled 1920×1080 canvas — fills full width, centered vertically */}
       <div
