@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Save, Monitor, ExternalLink } from 'lucide-react';
+import { Save, Monitor, ExternalLink, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -11,6 +11,8 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [savingPw, setSavingPw] = useState(false);
 
   const fetchData = useCallback(async () => {
     const data = await fetch('/api/settings').then((r) => r.json());
@@ -148,6 +150,75 @@ export default function SettingsPage() {
           Guardar configuración
         </Button>
       </div>
+
+      {/* Change Password */}
+      <section className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+        <h2 className="text-sm font-bold text-white/60 uppercase tracking-wider flex items-center gap-2">
+          <Lock size={14} /> Cambiar contraseña
+        </h2>
+        <Input
+          label="Contraseña actual"
+          type="password"
+          value={pwForm.currentPassword}
+          onChange={(e) => setPwForm((f) => ({ ...f, currentPassword: e.target.value }))}
+          placeholder="••••••"
+        />
+        <Input
+          label="Nueva contraseña"
+          type="password"
+          value={pwForm.newPassword}
+          onChange={(e) => setPwForm((f) => ({ ...f, newPassword: e.target.value }))}
+          placeholder="Mínimo 6 caracteres"
+        />
+        <Input
+          label="Confirmar nueva contraseña"
+          type="password"
+          value={pwForm.confirmPassword}
+          onChange={(e) => setPwForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+          placeholder="Repite la nueva contraseña"
+        />
+        <div className="flex justify-end">
+          <Button
+            icon={<Lock size={16} />}
+            loading={savingPw}
+            onClick={async () => {
+              if (!pwForm.currentPassword || !pwForm.newPassword) {
+                toast.error('Completa todos los campos');
+                return;
+              }
+              if (pwForm.newPassword !== pwForm.confirmPassword) {
+                toast.error('Las contraseñas no coinciden');
+                return;
+              }
+              if (pwForm.newPassword.length < 6) {
+                toast.error('La contraseña debe tener al menos 6 caracteres');
+                return;
+              }
+              setSavingPw(true);
+              try {
+                const res = await fetch('/api/auth/change-password', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    currentPassword: pwForm.currentPassword,
+                    newPassword: pwForm.newPassword,
+                  }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Error');
+                toast.success('Contraseña actualizada correctamente');
+                setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+              } catch (err: any) {
+                toast.error(err.message || 'Error al cambiar contraseña');
+              } finally {
+                setSavingPw(false);
+              }
+            }}
+          >
+            Cambiar contraseña
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }
