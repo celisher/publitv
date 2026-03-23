@@ -54,12 +54,19 @@ export async function GET(_req: NextRequest, { params }: { params: { slug: strin
         return true;
       });
 
+    // Fetch promo slides for this screen
+    const promoSlides = await prisma.promoSlide.findMany({
+      where: { screenId: screen.id, active: true },
+      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+    });
+
     return NextResponse.json({
       screen,
       template: screen.template,
       products,
       categories,
       promotions,
+      promoSlides,
       settings,
     });
   } catch (error) {

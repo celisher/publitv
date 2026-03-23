@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Package, Tag, Monitor, Palette,
-  Megaphone, Settings, Menu, X, ChevronRight, Tv
+  Megaphone, Flame, Settings, Menu, X, ChevronRight, Tv, LogOut, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +16,7 @@ const navItems = [
   { href: '/admin/screens', label: 'Pantallas TV', icon: Monitor },
   { href: '/admin/templates', label: 'Plantillas', icon: Palette },
   { href: '/admin/promotions', label: 'Promociones', icon: Megaphone },
+  { href: '/admin/promo-slides', label: 'Ofertas', icon: Flame },
   { href: '/admin/settings', label: 'Ajustes', icon: Settings },
 ];
 
@@ -30,7 +31,22 @@ const bottomNavItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState('');
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.user) setUserName(data.user.name); })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/admin/login');
+    router.refresh();
+  };
 
   const currentLabel = navItems.find((n) =>
     n.exact ? pathname === n.href : pathname.startsWith(n.href)
@@ -77,11 +93,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        {/* Toggle */}
-        <button onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="flex items-center justify-center p-4 border-t border-white/10 text-white/40 hover:text-white transition-colors">
-          {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
-        </button>
+        {/* User & Toggle */}
+        <div className="border-t border-white/10">
+          {sidebarOpen && userName && (
+            <div className="flex items-center gap-2 px-4 py-3 text-white/50">
+              <User size={14} />
+              <span className="text-xs font-medium truncate">{userName}</span>
+            </div>
+          )}
+          <div className="flex items-center">
+            <button onClick={handleLogout}
+              title="Cerrar sesión"
+              className={cn(
+                'flex items-center gap-2 text-white/40 hover:text-red-400 transition-colors',
+                sidebarOpen ? 'px-4 py-3 flex-1' : 'p-4 justify-center flex-1'
+              )}>
+              <LogOut size={18} />
+              {sidebarOpen && <span className="text-xs font-medium">Salir</span>}
+            </button>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-4 text-white/40 hover:text-white transition-colors">
+              {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+          </div>
+        </div>
       </aside>
 
       {/* ── MOBILE DRAWER OVERLAY ── */}
@@ -123,12 +158,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 );
               })}
             </nav>
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-white/10 space-y-2">
               <a href="/tv/tv-principal" target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 w-full px-4 py-3 rounded-xl bg-red-600/20 border border-red-600/30 text-red-400 font-semibold text-sm">
                 <Tv size={18} />
                 Ver pantalla TV
               </a>
+              <button onClick={handleLogout}
+                className="flex items-center gap-2 w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/50 font-semibold text-sm hover:text-red-400 hover:border-red-600/30 transition-colors">
+                <LogOut size={18} />
+                Cerrar sesión
+              </button>
+              {userName && (
+                <p className="text-center text-xs text-white/30 pt-1">
+                  <User size={12} className="inline mr-1" />{userName}
+                </p>
+              )}
             </div>
           </aside>
         </div>
@@ -155,6 +200,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Tv size={14} />
               <span className="hidden sm:inline">Vista TV</span>
             </a>
+            <button onClick={handleLogout}
+              title="Cerrar sesión"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/40 text-xs font-semibold hover:text-red-400 hover:border-red-600/30 transition-colors">
+              <LogOut size={14} />
+            </button>
           </div>
         </header>
 

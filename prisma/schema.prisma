@@ -78,6 +78,7 @@ model Screen {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   screenPromotions ScreenPromotion[]
+  promoSlides      PromoSlide[]
 }
 
 model Promotion {
@@ -107,6 +108,36 @@ model ScreenPromotion {
   createdAt   DateTime  @default(now())
 
   @@unique([screenId, promotionId])
+}
+
+model PromoSlide {
+  id           Int      @id @default(autoincrement())
+  screenId     Int
+  screen       Screen   @relation(fields: [screenId], references: [id], onDelete: Cascade)
+  title        String   @db.VarChar(200)
+  price        Decimal? @db.Decimal(10, 2)
+  priceUnit    String   @default("$/kg") @db.VarChar(20)
+  productImage String?  @db.VarChar(500)
+  bgImage      String?  @db.VarChar(500)
+  bgColor      String   @default("#c0392b") @db.VarChar(20)
+  titleColor   String   @default("#ffffff") @db.VarChar(20)
+  priceColor   String   @default("#ffdd00") @db.VarChar(20)
+  accentColor  String   @default("#d4ac0d") @db.VarChar(20)
+  active       Boolean  @default(true)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique @db.VarChar(150)
+  password  String   @db.VarChar(255)
+  name      String   @db.VarChar(100)
+  role      String   @default("admin") @db.VarChar(20)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AppSetting {

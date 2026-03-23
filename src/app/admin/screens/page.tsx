@@ -15,6 +15,7 @@ const DISPLAY_MODES = [
   { value: 'carousel', label: 'Carrusel — bloques de productos con paginación' },
   { value: 'promotion', label: 'Promociones — pantalla completa de promos' },
   { value: 'mixed', label: 'Mixto — alterna entre precios y promociones' },
+  { value: 'promo-individual', label: 'Ofertas Individuales — un producto en oferta a la vez' },
 ];
 
 const EMPTY_FORM = {

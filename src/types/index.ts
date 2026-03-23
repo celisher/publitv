@@ -94,6 +94,24 @@ export interface Screen {
   screenPromotions?: ScreenPromotion[];
 }
 
+export interface PromoSlide {
+  id: number;
+  screenId: number;
+  title: string;
+  price: number | null;
+  priceUnit: string;
+  productImage: string | null;
+  bgImage: string | null;
+  bgColor: string;
+  titleColor: string;
+  priceColor: string;
+  accentColor: string;
+  active: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AppSetting {
   id: number;
   key: string;
@@ -106,5 +124,6 @@ export interface TVScreenData {
   products: Product[];
   categories: Category[];
   promotions: Promotion[];
+  promoSlides: PromoSlide[];
   settings: Record<string, string>;
 }

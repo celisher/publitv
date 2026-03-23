@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
-import type { TVScreenData, Product, Category, Promotion, Template } from '@/types';
+import type { TVScreenData, Product, Category, Promotion, Template, PromoSlide } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -388,6 +388,188 @@ function PromotionLayout({ data }: { data: TVScreenData }) {
   return <PromotionSlide promotion={activePromos[index]} template={template} />;
 }
 
+// ─── Promo Individual Layout ──────────────────────────────────────────────────
+// Shows ONE product at a time: big image + big title + big price, with logo badge in corner.
+// No header, no overlay, no banner. Full-screen immersive layout.
+
+function PromoIndividualLayout({ data }: { data: TVScreenData }) {
+  const { promoSlides, screen, settings } = data;
+  const [index, setIndex] = useState(0);
+  const [fadeIn, setFadeIn] = useState(true);
+  const activeSlides = promoSlides.filter((s) => s.active);
+
+  useEffect(() => {
+    if (activeSlides.length <= 1) return;
+    const interval = setInterval(() => {
+      setFadeIn(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % activeSlides.length);
+        setFadeIn(true);
+      }, 400);
+    }, (screen.rotationInterval || 8) * 1000);
+    return () => clearInterval(interval);
+  }, [activeSlides.length, screen.rotationInterval]);
+
+  if (activeSlides.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-4xl opacity-30">Sin ofertas configuradas</p>
+      </div>
+    );
+  }
+
+  const slide = activeSlides[index] || activeSlides[0];
+  const logoPath = settings.logo_path;
+
+  return (
+    <div className="relative overflow-hidden" style={{ background: 'transparent', height: '100%', width: '100%' }}>
+      {/* Background image — NO color mask/overlay */}
+      {slide.bgImage && (
+        <div className="absolute inset-0 z-0">
+          <Image src={slide.bgImage} alt="" fill className="object-cover" unoptimized />
+        </div>
+      )}
+
+      {/* Subtle radial glow behind product area */}
+      <div className="absolute inset-0 z-0" style={{
+        background: `radial-gradient(ellipse 50% 60% at 65% 55%, ${slide.accentColor}18 0%, transparent 70%)`,
+      }} />
+
+      {/* Main content — fade transition */}
+      <div
+        className="relative z-10 flex h-full"
+        style={{
+          opacity: fadeIn ? 1 : 0,
+          transform: fadeIn ? 'scale(1)' : 'scale(0.97)',
+          transition: 'opacity 0.4s ease, transform 0.4s ease',
+        }}
+      >
+        {/* Title — top-left area */}
+        <div className="absolute z-10" style={{ top: 40, left: 60 }}>
+          <div
+            className="inline-block px-14 py-5 rounded-2xl"
+            style={{
+              background: `linear-gradient(135deg, ${slide.accentColor}, ${slide.accentColor}cc)`,
+              boxShadow: `0 8px 32px ${slide.accentColor}44`,
+            }}
+          >
+            <h2
+              className="font-black uppercase tracking-wide leading-tight text-center"
+              style={{
+                fontSize: 72,
+                color: slide.titleColor || '#ffffff',
+                textShadow: '3px 3px 6px rgba(0,0,0,0.4)',
+              }}
+            >
+              {slide.title}
+            </h2>
+          </div>
+        </div>
+
+        {/* Price circle — center-left, shifted right and up */}
+        {slide.price && (
+          <div className="absolute z-10" style={{ top: 'calc(15% + 120px)', left: 'calc(25% - 80px)', transform: 'translateX(-50%)' }}>
+            <div
+              className="relative flex flex-col items-center justify-center rounded-full"
+              style={{
+                width: 500,
+                height: 500,
+                background: `radial-gradient(circle, ${slide.bgColor}ee 0%, ${slide.bgColor}cc 50%, ${slide.accentColor}33 100%)`,
+                border: `8px solid ${slide.accentColor}`,
+                boxShadow: `0 0 60px ${slide.accentColor}44, inset 0 0 40px rgba(0,0,0,0.15)`,
+                padding: 50,
+              }}
+            >
+              <span className="text-3xl font-bold opacity-70" style={{ color: slide.priceColor }}>
+                {settings.currency_symbol || '$'}
+              </span>
+              <span
+                className="font-black leading-none"
+                style={{
+                  fontSize: 150,
+                  color: slide.priceColor || '#ffdd00',
+                  textShadow: `0 0 30px ${slide.priceColor}66, 0 4px 12px rgba(0,0,0,0.3)`,
+                }}
+              >
+                {formatPrice(slide.price)}
+              </span>
+              <span className="text-2xl font-bold uppercase opacity-60 mt-2" style={{ color: slide.priceColor }}>
+                {slide.priceUnit || '$/kg'}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Right side — Product image, absolutely positioned */}
+        <div className="absolute z-10 flex items-center justify-center"
+          style={{ top: 'calc(10% - 30px)', right: 40, width: 750, height: '85%' }}>
+          {slide.productImage ? (
+            <div className="relative" style={{ width: 700, height: 700 }}>
+              <Image
+                src={slide.productImage}
+                alt={slide.title}
+                fill
+                className="object-contain"
+                style={{ filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.5))' }}
+                unoptimized
+              />
+            </div>
+          ) : (
+            <div className="w-96 h-96 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(255,255,255,0.1)', border: `3px solid ${slide.accentColor}33` }}>
+              <span className="text-9xl opacity-30">🥩</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Logo — large, bottom-left, 10% hidden left and 10% hidden bottom (90% visible) */}
+      {logoPath && (
+        <div
+          className="absolute z-20"
+          style={{
+            bottom: 2,
+            left: 2,
+            width: 280,
+            height: 280,
+            borderRadius: '50%',
+            border: `6px solid ${slide.accentColor}`,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(8px)',
+            boxShadow: `0 0 30px ${slide.accentColor}44, 0 6px 24px rgba(0,0,0,0.5)`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          <div className="relative" style={{ width: 230, height: 230 }}>
+            <Image src={logoPath} alt="Logo" fill className="object-contain" unoptimized />
+          </div>
+        </div>
+      )}
+
+      {/* Slide indicators */}
+      {activeSlides.length > 1 && (
+        <div className="absolute bottom-6 right-16 z-20 flex gap-3">
+          {activeSlides.map((_, i) => (
+            <div
+              key={i}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width: i === index ? 40 : 12,
+                height: 12,
+                background: i === index ? slide.accentColor : 'rgba(255,255,255,0.3)',
+                boxShadow: i === index ? `0 0 10px ${slide.accentColor}66` : 'none',
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TVBanner({ template, settings }: { template: Template | null; settings: Record<string, string> }) {
   if (!template?.showBanner) return null;
   const text = template.bannerText || settings.business_name || '';
@@ -486,6 +668,7 @@ export default function TVPage() {
     socket.on('products:updated', () => fetchData());
     socket.on('categories:updated', () => fetchData());
     socket.on('promotions:updated', () => fetchData());
+    socket.on('promoSlides:updated', () => fetchData());
     socket.on('settings:updated', () => fetchData());
     socket.on('templates:updated', () => fetchData());
 
@@ -555,8 +738,8 @@ export default function TVPage() {
 
   return (
     <div className="tv-wrapper" style={wrapperStyle} onDoubleClick={toggleFullscreen}>
-      {/* Full-screen overlay */}
-      <div style={overlayStyle} />
+      {/* Full-screen overlay — hidden for promo-individual */}
+      {displayMode !== 'promo-individual' && <div style={overlayStyle} />}
 
       {/* Fullscreen button */}
       {!isFullscreen && (
@@ -602,14 +785,15 @@ export default function TVPage() {
       >
         {/* Content */}
         <div style={contentStyle}>
-          <TVHeader settings={settings} template={template} />
+          {displayMode !== 'promo-individual' && <TVHeader settings={settings} template={template} />}
 
           {displayMode === 'list' && <ListLayout data={data} />}
           {displayMode === 'carousel' && <CarouselLayout data={data} />}
           {displayMode === 'promotion' && <PromotionLayout data={data} />}
           {displayMode === 'mixed' && <MixedLayout data={data} />}
+          {displayMode === 'promo-individual' && <PromoIndividualLayout data={data} />}
 
-          <TVBanner template={template} settings={settings} />
+          {displayMode !== 'promo-individual' && <TVBanner template={template} settings={settings} />}
         </div>
       </div>
     </div>
