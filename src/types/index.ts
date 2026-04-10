@@ -101,6 +101,8 @@ export interface PromoSlide {
   price: number | null;
   priceUnit: string;
   productImage: string | null;
+  comboText: string | null;
+  comboVisible: boolean;
   bgImage: string | null;
   bgColor: string;
   titleColor: string;

@@ -18,6 +18,8 @@ interface PromoSlideItem {
   price: number | null;
   priceUnit: string;
   productImage: string | null;
+  comboText: string | null;
+  comboVisible: boolean;
   bgImage: string | null;
   bgColor: string;
   titleColor: string;
@@ -34,6 +36,8 @@ const EMPTY_FORM = {
   price: '',
   priceUnit: '$/kg',
   productImage: null as string | null,
+  comboText: '',
+  comboVisible: false,
   bgImage: null as string | null,
   bgColor: '#c0392b',
   titleColor: '#ffffff',
@@ -79,6 +83,8 @@ export default function PromoSlidesPage() {
       price: s.price !== null ? String(s.price) : '',
       priceUnit: s.priceUnit,
       productImage: s.productImage,
+      comboText: s.comboText || '',
+      comboVisible: s.comboVisible,
       bgImage: s.bgImage,
       bgColor: s.bgColor,
       titleColor: s.titleColor,
@@ -217,6 +223,11 @@ export default function PromoSlidesPage() {
                     {slide.screen?.name || `Pantalla #${slide.screenId}`}
                   </span>
                   <span className="text-xs text-white/30">Orden: {slide.order}</span>
+                  {slide.comboVisible && slide.comboText && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-900/30 text-yellow-300 border border-yellow-700/40">
+                      Lista activa
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-white/5">
                   <Toggle checked={slide.active} onChange={() => handleToggle(slide)} size="sm"
@@ -270,6 +281,27 @@ export default function PromoSlidesPage() {
             value={form.productImage}
             onChange={(url) => setForm({ ...form, productImage: url })}
             folder="uploads/promo-slides" />
+
+          <div className="space-y-2 p-3 rounded-xl bg-white/5 border border-white/10">
+            <Toggle
+              checked={form.comboVisible}
+              onChange={(v) => setForm({ ...form, comboVisible: v })}
+              label="Mostrar lista de texto (combos)"
+            />
+            <div>
+              <label className="text-sm font-medium text-white/70 block mb-1">Lista de productos del combo</label>
+              <textarea
+                value={form.comboText}
+                onChange={(e) => setForm({ ...form, comboText: e.target.value })}
+                placeholder={'Escribe un ítem por línea.\nEj:\n- 1 Kg Costilla\n- 1 Kg Chorizo\n- 1 Kg Chuleta'}
+                rows={5}
+                className="w-full rounded-xl bg-white/5 border border-white/10 text-white px-3 py-2 text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+              />
+              <p className="text-xs text-white/40 mt-1">
+                Esta lista se muestra en el centro, entre el precio y la imagen, solo cuando está activada.
+              </p>
+            </div>
+          </div>
 
           <ImageUpload label="Imagen de fondo (opcional)"
             value={form.bgImage}

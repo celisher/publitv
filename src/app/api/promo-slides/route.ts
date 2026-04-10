@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
         price: body.price ? parseFloat(body.price) : null,
         priceUnit: body.priceUnit || '$/kg',
         productImage: body.productImage || null,
+        comboText: body.comboText || null,
+        comboVisible: body.comboVisible ?? false,
         bgImage: body.bgImage || null,
         bgColor: body.bgColor || '#c0392b',
         titleColor: body.titleColor || '#ffffff',

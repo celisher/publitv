@@ -420,6 +420,12 @@ function PromoIndividualLayout({ data }: { data: TVScreenData }) {
 
   const slide = activeSlides[index] || activeSlides[0];
   const logoPath = settings.logo_path;
+  const comboItems = slide.comboVisible && slide.comboText
+    ? slide.comboText
+      .split('\n')
+      .map((line) => line.replace(/^[-•]\s*/, '').trim())
+      .filter(Boolean)
+    : [];
 
   return (
     <div className="relative overflow-hidden" style={{ background: 'transparent', height: '100%', width: '100%' }}>
@@ -497,6 +503,54 @@ function PromoIndividualLayout({ data }: { data: TVScreenData }) {
                 {slide.priceUnit || '$/kg'}
               </span>
             </div>
+          </div>
+        )}
+
+        {/* Combo list — center between price and product image */}
+        {comboItems.length > 0 && (
+          <div
+            className="absolute z-10"
+            style={{
+              top: '50%',
+              left: '49%',
+              transform: 'translate(-50%, -50%)',
+              width: 420,
+              maxHeight: 420,
+              overflow: 'hidden',
+              border: `2px solid ${slide.accentColor}aa`,
+              borderRadius: 24,
+              background: 'rgba(0,0,0,0.45)',
+              backdropFilter: 'blur(6px)',
+              boxShadow: '0 12px 30px rgba(0,0,0,0.35)',
+              padding: '24px 28px',
+            }}
+          >
+            <p
+              className="uppercase font-black tracking-wider mb-3"
+              style={{
+                color: slide.accentColor,
+                fontSize: 26,
+                textShadow: '0 2px 6px rgba(0,0,0,0.35)',
+              }}
+            >
+              Incluye:
+            </p>
+            <ul className="space-y-2">
+              {comboItems.map((item, idx) => (
+                <li
+                  key={`${item}-${idx}`}
+                  className="font-bold leading-snug flex items-start gap-2"
+                  style={{
+                    color: slide.titleColor || '#ffffff',
+                    fontSize: 30,
+                    textShadow: '0 2px 6px rgba(0,0,0,0.4)',
+                  }}
+                >
+                  <span style={{ color: slide.accentColor }}>•</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

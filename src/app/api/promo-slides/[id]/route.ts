@@ -12,6 +12,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.price !== undefined) data.price = body.price ? parseFloat(body.price) : null;
     if (body.priceUnit !== undefined) data.priceUnit = body.priceUnit;
     if (body.productImage !== undefined) data.productImage = body.productImage;
+    if (body.comboText !== undefined) data.comboText = body.comboText;
+    if (body.comboVisible !== undefined) data.comboVisible = body.comboVisible;
     if (body.bgImage !== undefined) data.bgImage = body.bgImage;
     if (body.bgColor !== undefined) data.bgColor = body.bgColor;
     if (body.titleColor !== undefined) data.titleColor = body.titleColor;

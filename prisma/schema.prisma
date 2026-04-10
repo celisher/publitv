@@ -118,6 +118,8 @@ model PromoSlide {
   price        Decimal? @db.Decimal(10, 2)
   priceUnit    String   @default("$/kg") @db.VarChar(20)
   productImage String?  @db.VarChar(500)
+  comboText    String?  @db.Text
+  comboVisible Boolean  @default(false)
   bgImage      String?  @db.VarChar(500)
   bgColor      String   @default("#c0392b") @db.VarChar(20)
   titleColor   String   @default("#ffffff") @db.VarChar(20)
